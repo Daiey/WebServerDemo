@@ -1,10 +1,9 @@
 package com.webserver.vo;
 
 /**
- * VO:Value Object 值对象
- * 值对象不需要定义什么业务逻辑，这种类的每一个实例就是用来表示一组信息的
- *
- * USer这个类的每一个实例用于表示user.dat文件中的一个用户信息
+ * vo:value object 值对象
+ * <p>
+ * 当前类的每一个实例用于表示user.dat文件中的一个用户信息
  */
 public class User {
     private String username;
@@ -53,10 +52,11 @@ public class User {
 
     @Override
     public String toString() {
-        return "(" + "username='" + username +
-                ", password='" + password +
-                ", nickname='" + nickname +
+        return "User{" +
+                "username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                ", nickname='" + nickname + '\'' +
                 ", age=" + age +
-                ")";
+                '}';
     }
 }

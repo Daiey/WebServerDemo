@@ -3,93 +3,83 @@ package com.webserver.servlet;
 import com.webserver.http.HttpRequest;
 import com.webserver.http.HttpResponse;
 import com.webserver.vo.User;
-import org.apache.log4j.Logger;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templateresolver.FileTemplateResolver;
 
-import java.io.File;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 显示所有用户信息的动态页面
+ * 生成包含user.dat文件中所有用户信息的动态页面
  */
-public class ShowAllUserServlet {
-    private static Logger logger = Logger.getLogger(ShowAllUserServlet.class);
+public class ShowAllUserServlet extends HttpServlet {
     public void service(HttpRequest request, HttpResponse response) {
-//        System.out.println("showAllUserServlet:开始生成动态页面...");
-        logger.info("showAllUserServlet:开始生成动态页面...");
-        //1 从user.dat文件中将所有用户信息读取出来
-        List<User> list = new ArrayList<>();
+        System.out.println("ShowAllUserSerlvet:开始处理用户列表页面...");
+        //先将user.dat文件中所有记录读取出来
+        List<User> list = new ArrayList<>();//保存user.dat文件中所有用户信息
         try (
                 RandomAccessFile raf = new RandomAccessFile("user.dat", "r");
         ) {
             for (int i = 0; i < raf.length() / 100; i++) {
-                raf.seek(i * 100);
+                //读取用户名
                 byte[] data = new byte[32];
                 raf.read(data);
-                String username = new String(data, "utf-8").trim();
-                data = new byte[32];
+                String username = new String(data, "UTF-8").trim();
+                //读取密码
                 raf.read(data);
-                String password = new String(data, "utf-8").trim();
-                data = new byte[32];
+                String password = new String(data, "UTF-8").trim();
+                //读取昵称
                 raf.read(data);
-                String nickname = new String(data, "utf-8").trim();
-                int age = raf.readInt();
+                String nickname = new String(data, "UTF-8").trim();
+                //读取年龄
+                int age = raf.readInt();//EOFException  end of file
                 User user = new User(username, password, nickname, age);
                 list.add(user);
+                System.out.println(user);
             }
-            for (User user:list){
-//                System.out.println(user);
-                logger.info(user);
-            }
-
-        } catch (Exception e) {
-            logger.error(e.getMessage(),e);
-
-        }
-
-
-        //2 使用thymeleaf将所有用户信息与userlist.html页面结合并生成动态页面
-        //2.1所有要在页面上现实的动态数据都需要存入一个名为Context的类中
-        Context context = new Context();
-        /*
-            像Context中添加要在页面中显示的数据，使用类似于Map的put方法。
-            第一个参数为名字，第二个参数为存放的值。将来在页面上某个位置要显示这些数据时
-            会在那里标注这个名字。thymeleaf就会根据名字获取对应的值来进行显示了
-         */
-        context.setVariable("users", list);
-        //2.2初始化Thymeleaf
-        //模板解释器，用来告知引擎模板相关信息
-        FileTemplateResolver tr = new FileTemplateResolver();
-        tr.setCharacterEncoding("utf-8");
-        tr.setTemplateMode("html");
-        //实例化模板引擎
-        TemplateEngine engine = new TemplateEngine();
-        engine.setTemplateResolver(tr);
-        //2.3将动态数据和模板页面交给引擎来生成动态页面
-        /*
-            String process(String template,Context context)
-            该方法就死thymeleaf将模板页面与context中的数据进行结合来生成一个动态页面，返回值就是
-            生成后的动态页面的源代码(html代码)
-         */
-        String html = engine.process("./webapps/myweb/userlist.html", context);
-        System.out.println(html);
-
-        //3 将生成后的动态页面设置到response中以发送给客户端
-        try {
-            byte[] data = html.getBytes("utf-8");
-            //将thymeleaf
-            response.setContentData(data);
-            response.putHeaders("Contrnt-Type","text/html");
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
+        /*
+            使用thymeleaf将数据与页面整合生成动态页面
+         */
+        /*
+            Context用于保存所有需要在页面上展示的动态数据
+         */
+        Context context = new Context();
+        context.setVariable("users", list);
 
-//        System.out.println("showAllUserServlet:动态页面生成完毕！");
-        logger.info("showAllUserServlet:动态页面生成完毕！");
+        //初始化Thymeleaf模板引擎
+        //1初始化模板解释器,用来告知模板引擎有关模板页面的相关信息
+        FileTemplateResolver resolver = new FileTemplateResolver();
+        resolver.setTemplateMode("html");//模板类型,指定为html格式
+        resolver.setCharacterEncoding("UTF-8");//模板使用的字符集(我们的页面都是UTF-8编码的)
+        //2实例化模板引擎
+        TemplateEngine te = new TemplateEngine();
+        te.setTemplateResolver(resolver);//设置模板解释器,使其了解模板相关信息
+
+        /*
+            String process(String path,Context ctx)
+            模板引擎生成动态页面的方法
+            参数1:模板页面的路径
+            参数2:需要在页面上显示的数据(数据应当都放在这个Context中)
+            返回值为生成好的html代码
+         */
+        String html = te.process("./webapps/myweb/userlist.html", context);
+
+
+        try {
+            byte[] data = html.getBytes("UTF-8");
+            //将生成的页面内容设置到response中
+            response.setData(data);
+            response.putHeader("Content-Type", "text/html");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("ShowAllUserSerlvet:处理用户列表页面完毕!");
     }
 }

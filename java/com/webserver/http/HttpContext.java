@@ -9,46 +9,62 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 该类维护所有HTTP协议中固定不变的内容
+ * HTTP协议规定的内容都定义在这里,以便将来重用
  */
 public class HttpContext {
-    //保存所有Context-Type头的值与资源后缀的对应关系
-    private static Map<String,String> mineMapping = new HashMap<>();
-    //初始化所有静态资源
+    /**
+     * Content-Type信息
+     * key:资源的后缀名
+     * value:对应的Content-Type的值
+     */
+    private static Map<String, String> mimeMapping = new HashMap<>();
+
     static {
-        initMineMapping();
-
-
+        initMimeMapping();
     }
 
-    private static void initMineMapping(){
-        try{
+    private static void initMimeMapping() {
+//        mimeMapping.put("html","text/html");
+//        mimeMapping.put("css","text/css");
+//        mimeMapping.put("js","application/javascript");
+//        mimeMapping.put("png","image/png");
+//        mimeMapping.put("jpg","image/jpeg");
+//        mimeMapping.put("gif","image/gif");
+        /*
+            通过解析config/web.xml文件初始化mimeMapping
+            将根标签下所有名为<mime-mapping>的子标签获取到
+            并将其中的子标签:
+            <extension>中间的文本作为key
+            <mime-type>中间的文本作为value
+            保存到mimeMapping这个Map中
+            初始化完毕后,mimeMapping中应当有1011个元素
+         */
+        try {
             SAXReader reader = new SAXReader();
             Document doc = reader.read("./config/web.xml");
-            Element root =doc.getRootElement();
-            String name = root.getName();
-            System.out.println(name);
-
+            Element root = doc.getRootElement();
             List<Element> list = root.elements("mime-mapping");
-
-            int i = 1;
-            for (Element empEle : list){
-                String key = empEle.elementText("extension");
-                String value = empEle.elementText("mime-type");
-                mineMapping.put(key,value);
+            for (Element mime : list) {
+                String key = mime.elementText("extension");
+                String value = mime.elementText("mime-type");
+                mimeMapping.put(key, value);
             }
-
-        }catch (Exception e){
-
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
+        System.out.println(mimeMapping.size());//1011
     }
 
     /**
      * 根据资源后缀名获取对应的Content-Type的值
-     * @param ext       资源的后缀名
-     * @return          Content-Type头的值
+     *
+     * @param ext
+     * @return
      */
-    public static String getMineType(String ext){
-        return mineMapping.get(ext);
+    public static String getMimeType(String ext) {
+        return mimeMapping.get(ext);
     }
+
+
 }

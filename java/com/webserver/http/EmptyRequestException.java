@@ -2,9 +2,9 @@ package com.webserver.http;
 
 /**
  * 空请求异常
- * 当HTTPRequest实例化时（解析请求的过程）遇到了空请求则会抛出该异常
+ * 当HttpRequest解析请求时发现本次请求为空请求时会抛出该异常
  */
-public class EmptyRequestException extends Exception{
+public class EmptyRequestException extends Exception {
     public EmptyRequestException() {
     }
 
